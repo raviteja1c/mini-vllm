@@ -70,6 +70,34 @@ class TokenInputs(TypedDict):
     """
 
 
+def token_inputs(
+    prompt_token_ids: List[int],
+    token_type_ids: Optional[List[int]] = None,
+    prompt: Optional[str] = None,
+    multi_modal_data: Optional["MultiModalDataDict"] = None,
+    multi_modal_inputs: Optional["MultiModalKwargs"] = None,
+    multi_modal_placeholders: Optional["MultiModalPlaceholderDict"] = None,
+    mm_processor_kwargs: Optional[Dict[str, Any]] = None,
+) -> TokenInputs:
+    """Construct :class:`TokenInputs` from optional values."""
+    inputs = TokenInputs(type="token", prompt_token_ids=prompt_token_ids)
+
+    if prompt is not None:
+        inputs["prompt"] = prompt
+    if token_type_ids is not None:
+        inputs["token_type_ids"] = token_type_ids
+    if multi_modal_data is not None:
+        inputs["multi_modal_data"] = multi_modal_data
+    if multi_modal_inputs is not None:
+        inputs["multi_modal_inputs"] = multi_modal_inputs
+    if multi_modal_placeholders is not None:
+        inputs["multi_modal_placeholders"] = multi_modal_placeholders
+    if mm_processor_kwargs is not None:
+        inputs["mm_processor_kwargs"] = mm_processor_kwargs
+
+    return inputs
+
+
 DecoderOnlyInputs = Union[TokenInputs, "MultiModalInputsV2"]
 """
 The inputs in :class:`~vllm.LLMEngine` before they are
