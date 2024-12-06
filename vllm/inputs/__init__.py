@@ -1,1 +1,1 @@
-from .data import DecoderOnlyInputs
+from .data import DecoderOnlyInputs, SingletonInputsAdapter

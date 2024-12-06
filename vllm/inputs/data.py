@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from functools import cached_property
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -11,6 +13,8 @@ from typing import (
     Union,
     cast,
 )
+
+import torch
 from typing_extensions import NotRequired, TypedDict, TypeVar, assert_never
 
 
@@ -72,3 +76,103 @@ The inputs in :class:`~vllm.LLMEngine` before they are
 passed to the model executor.
 This specifies the data required for decoder-only models.
 """
+
+
+SingletonInputs = Union[TokenInputs, "MultiModalInputsV2"]
+"""
+A processed :class:`SingletonPrompt` which can be passed to
+:class:`vllm.sequence.Sequence`.
+"""
+
+
+@dataclass
+class SingletonInputsAdapter:
+    """
+    Unified interface to access the components of :class:`SingletonInputs`.
+    """
+
+    inputs: SingletonInputs
+
+    @cached_property
+    def prompt(self) -> Optional[str]:
+        inputs = self.inputs
+
+        if inputs["type"] == "token" or inputs["type"] == "multimodal":
+            return inputs.get("prompt")
+
+        assert_never(inputs)
+
+    @cached_property
+    def prompt_token_ids(self) -> List[int]:
+        inputs = self.inputs
+
+        if inputs["type"] == "token" or inputs["type"] == "multimodal":
+            return inputs.get("prompt_token_ids", [])
+
+        assert_never(inputs)
+
+    @cached_property
+    def token_type_ids(self) -> List[int]:
+        inputs = self.inputs
+
+        if inputs["type"] == "token" or inputs["type"] == "multimodal":
+            return inputs.get("token_type_ids", [])
+
+        assert_never(inputs)
+
+    @cached_property
+    def prompt_embeds(self) -> Optional[torch.Tensor]:
+        inputs = self.inputs
+
+        if inputs["type"] == "token" or inputs["type"] == "multimodal":
+            return None
+
+        assert_never(inputs)
+
+    @cached_property
+    def multi_modal_data(self) -> "MultiModalDataDict":
+        inputs = self.inputs
+
+        if inputs["type"] == "token":
+            return inputs.get("multi_modal_data", {})
+
+        if inputs["type"] == "multimodal":
+            return inputs.get("mm_kwargs", {})
+
+        assert_never(inputs)
+
+    @cached_property
+    def multi_modal_inputs(self) -> Union[Dict, "MultiModalKwargs"]:
+        inputs = self.inputs
+
+        if inputs["type"] == "token":
+            return inputs.get("multi_modal_inputs", {})
+
+        if inputs["type"] == "multimodal":
+            return inputs.get("mm_kwargs", {})
+
+        assert_never(inputs)
+
+    @cached_property
+    def multi_modal_placeholders(self) -> "MultiModalPlaceholderDict":
+        inputs = self.inputs
+
+        if inputs["type"] == "token":
+            return inputs.get("multi_modal_placeholders", {})
+
+        if inputs["type"] == "multimodal":
+            return inputs.get("mm_placeholders", {})
+
+        assert_never(inputs)
+
+    @cached_property
+    def mm_processor_kwargs(self) -> Dict[str, Any]:
+        inputs = self.inputs
+
+        if inputs["type"] == "token":
+            return inputs.get("mm_processor_kwargs", {})
+
+        if inputs["type"] == "multimodal":
+            return {}
+
+        assert_never(inputs)
